@@ -23,7 +23,8 @@ class LLMService:
         
         self.client = OpenAI(api_key=self.api_key)
         self.async_client = AsyncOpenAI(api_key=self.api_key)
-        self.model = "gpt-4-turbo-preview"  # Using GPT-4.1 equivalent
+        self.model = "gpt-4.1-mini"
+        self.explanation_model = "o3-mini"  # Model for generating detailed explanations
     
     def generate_name_variations(self, name: str, max_variations: int = 10) -> List[str]:
         """Generate name variations using LLM while preserving identity."""
@@ -281,3 +282,113 @@ Return a JSON object with:
         
         logger.info(f"Completed parallel assessment of {len(candidates)} matches")
         return candidates
+    
+    async def generate_explanation_async(self, query_info: Dict, match: Dict) -> str:
+        """Generate detailed explanation for high-confidence matches using o3-mini."""
+        entry = match['entry']
+        logger.info(f"Generating detailed explanation for '{entry.name}' using {self.explanation_model}")
+        
+        prompt = f"""You are an expert sanctions compliance analyst. Provide a detailed assessment of the likelihood that this is a true match.
+
+Search Query:
+- Name: {query_info['name']}
+- Date of Birth: {query_info.get('dob', 'Not specified')}
+- Nationality/Country: {query_info.get('nationality', 'Not specified')}
+
+Matched Individual/Entity:
+- Name: {entry.name}
+- Type: {entry.type}
+- Date of Birth: {entry.dob or 'Not specified'}
+- Place of Birth: {entry.pob or 'Not specified'}
+- Nationality: {entry.nationality or 'Not specified'}
+- Program: {entry.program}
+- Aliases: {', '.join(entry.aliases) if entry.aliases else 'None'}
+- Remarks: {entry.remarks or 'None'}
+
+Initial Scores:
+- Name Match Score: {match.get('name_match_score', 0):.3f}
+- Context Score: {match.get('llm_score', 0):.3f}
+- Confidence Level: {match.get('confidence', 'UNKNOWN')}
+
+Please provide:
+1. A thorough analysis of the match likelihood
+2. Key factors supporting or contradicting the match
+3. Any red flags or areas requiring additional verification
+4. Your overall assessment of whether this is likely the same person/entity
+
+Be specific and detailed in your analysis, considering all available data points."""
+        
+        try:
+            # o3-mini has different parameter requirements
+            response = await self.async_client.chat.completions.create(
+                model=self.explanation_model,
+                messages=[
+                    {"role": "system", "content": "You are a sanctions compliance expert providing detailed match assessments for screening systems."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_completion_tokens=1000
+            )
+            
+            explanation = response.choices[0].message.content.strip()
+            logger.info(f"Generated explanation of {len(explanation)} characters")
+            return explanation
+            
+        except Exception as e:
+            logger.error(f"Error generating explanation with {self.explanation_model}: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            return f"High-confidence match based on name similarity ({match.get('name_match_score', 0):.2f}) and context analysis ({match.get('llm_score', 0):.2f})."
+    
+    def generate_explanation(self, query_info: Dict, match: Dict) -> str:
+        """Synchronous version of generate_explanation for compatibility."""
+        entry = match['entry']
+        logger.info(f"Generating detailed explanation for '{entry.name}' using {self.explanation_model}")
+        
+        prompt = f"""You are an expert sanctions compliance analyst. Provide a detailed assessment of the likelihood that this is a true match.
+
+Search Query:
+- Name: {query_info['name']}
+- Date of Birth: {query_info.get('dob', 'Not specified')}
+- Nationality/Country: {query_info.get('nationality', 'Not specified')}
+
+Matched Individual/Entity:
+- Name: {entry.name}
+- Type: {entry.type}
+- Date of Birth: {entry.dob or 'Not specified'}
+- Place of Birth: {entry.pob or 'Not specified'}
+- Nationality: {entry.nationality or 'Not specified'}
+- Program: {entry.program}
+- Aliases: {', '.join(entry.aliases) if entry.aliases else 'None'}
+- Remarks: {entry.remarks or 'None'}
+
+Initial Scores:
+- Name Match Score: {match.get('name_match_score', 0):.3f}
+- Context Score: {match.get('llm_score', 0):.3f}
+- Confidence Level: {match.get('confidence', 'UNKNOWN')}
+
+Please provide:
+1. A thorough analysis of the match likelihood
+2. Key factors supporting or contradicting the match
+3. Any red flags or areas requiring additional verification
+4. Your overall assessment of whether this is likely the same person/entity
+
+Be specific and detailed in your analysis, considering all available data points."""
+        
+        try:
+            # o3-mini has different parameter requirements
+            response = self.client.chat.completions.create(
+                model=self.explanation_model,
+                messages=[
+                    {"role": "system", "content": "You are a sanctions compliance expert providing detailed match assessments for screening systems."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_completion_tokens=1000
+            )
+            
+            explanation = response.choices[0].message.content.strip()
+            logger.info(f"Generated explanation of {len(explanation)} characters")
+            return explanation
+            
+        except Exception as e:
+            logger.error(f"Error generating explanation with {self.explanation_model}: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            return f"High-confidence match based on name similarity ({match.get('name_match_score', 0):.2f}) and context analysis ({match.get('llm_score', 0):.2f})."

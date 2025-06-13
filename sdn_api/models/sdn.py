@@ -47,6 +47,7 @@ class MatchResult(BaseModel):
     confidence: ConfidenceLevel
     match_reasons: List[str]
     details: Dict[str, Optional[str | List[str]]]
+    explanation: Optional[str] = Field(None, description="Detailed explanation for high-confidence matches")
 
 
 class SearchResponse(BaseModel):

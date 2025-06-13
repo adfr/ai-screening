@@ -4,10 +4,11 @@ A sophisticated two-step matching system for searching the OFAC SDN (Specially D
 
 ## Overview
 
-The SDN Watchlist API uses a two-phase approach to identify potential matches:
+The SDN Watchlist API uses a three-phase approach to identify potential matches:
 
 1. **Name Matching Phase**: Employs multiple strategies including exact matching, fuzzy matching, phonetic matching, and name variation handling to cast a wide net for potential matches
 2. **Context Ranking Phase**: Scores and ranks matches based on additional context like date of birth, nationality, and other identifying information
+3. **Explanation Generation Phase**: For high-confidence matches, generates detailed explanations using advanced AI models to assess the likelihood of a true match
 
 ## Features
 
@@ -172,7 +173,8 @@ curl -X POST "http://localhost:8000/search" \
         "Date of birth matches",
         "Nationality matches"
       ],
-      "context_score": 0.92
+      "context_score": 0.92,
+      "explanation": "Based on the analysis, this appears to be a high-likelihood match. The name matches exactly, and the date of birth (21 Jun 1955) aligns perfectly with the query. The nationality 'United States' corresponds to the search term 'american'. All key identifying factors are consistent, suggesting this is likely the same individual. No contradicting information was found in the available data."
     }
   ],
   "total_matches": 1,
@@ -227,6 +229,27 @@ flake8 sdn_api tests
 # Type checking
 mypy sdn_api
 ```
+
+## How It Works: Example Search Flow
+
+For query: "ABBES, Moustaf"
+
+1. **Step 1 generates variations**:
+   - "ABBES, Moustaf", "Moustaf ABBES", "ABBES Moustaf", etc.
+
+2. **Step 1 finds matches**:
+   - "ABBES, Moustafa" (exact match: 1.0)
+   - "MOUSTFA, Djamel" with alias "MOUSTAFA" (alias match: 0.89)
+
+3. **Step 2 ranks with context**:
+   - ABBES, Moustafa: llm_score: 1.0, confidence: MEDIUM-HIGH
+   - MOUSTFA, Djamel: llm_score: 0.96, confidence: HIGH
+
+4. **Step 3 generates explanations**:
+   - Detailed analysis for each high-confidence match
+   - Highlights the "Moustaf" vs "Moustafa" spelling variation
+   - Notes missing DOB/nationality in query
+   - Recommends additional verification steps
 
 ## Architecture
 

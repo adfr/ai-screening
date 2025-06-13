@@ -1,10 +1,12 @@
 import re
+import asyncio
 from typing import List, Dict, Optional
 
 from .data_loader import SDNDataLoader
 from .name_matcher import NameMatcher
 from .ranker import MatchRanker
-from ..models.sdn import SDNEntry, MatchResult
+from .llm_service import LLMService
+from ..models.sdn import SDNEntry, MatchResult, ConfidenceLevel
 from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -21,6 +23,10 @@ class SDNSearchService:
         logger.debug("Name matcher initialized")
         self.ranker = MatchRanker(use_llm=use_llm)
         logger.debug("Ranker initialized")
+        self.use_llm = use_llm
+        if use_llm:
+            self.llm_service = LLMService()
+            logger.debug("LLM service initialized for explanations")
         self.entries: List[SDNEntry] = []
         logger.info("Loading SDN data...")
         self.load_data()
@@ -56,6 +62,22 @@ class SDNSearchService:
         ranked = self.ranker.rank_matches(query_info, filtered)
         logger.info(f"Step 2 complete: Ranked {len(ranked)} matches")
         
+        # Step 3: Generate explanations for high-confidence matches
+        if self.use_llm:
+            logger.info("Step 3: Generating explanations for high-confidence matches...")
+            for match in ranked[:max_results]:
+                # Generate explanation for HIGH confidence matches
+                if match['confidence'] in [ConfidenceLevel.HIGH, ConfidenceLevel.MEDIUM_HIGH]:
+                    try:
+                        explanation = self.llm_service.generate_explanation(query_info, match)
+                        match['explanation'] = explanation
+                        logger.info(f"Generated explanation for {match['entry'].name}")
+                    except Exception as e:
+                        logger.error(f"Error generating explanation: {e}")
+                        match['explanation'] = None
+                else:
+                    match['explanation'] = None
+        
         # Format results
         results = []
         for match in ranked[:max_results]:
@@ -76,7 +98,8 @@ class SDNSearchService:
                     'pob': entry.pob,
                     'aliases': entry.aliases,
                     'remarks': entry.remarks
-                }
+                },
+                explanation=match.get('explanation')
             )
             results.append(result)
         
