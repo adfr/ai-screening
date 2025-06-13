@@ -37,6 +37,20 @@ The SDN Watchlist API uses a three-phase approach to identify potential matches:
 - UV package manager
 - Access to OFAC SDN data
 
+## Download SDN Data
+
+Before running the API, you need to download the OFAC SDN data file:
+
+```bash
+# Download the SDN CSV file
+curl -o sdn.csv https://www.treasury.gov/ofac/downloads/sdn.csv
+
+# Alternative: using wget
+wget -O sdn.csv https://www.treasury.gov/ofac/downloads/sdn.csv
+```
+
+The SDN file is updated regularly by OFAC. For production use, consider setting up automated downloads to keep your data current.
+
 ## Installation
 
 ### 1. Clone the repository
