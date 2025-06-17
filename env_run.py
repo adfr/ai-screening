@@ -4,25 +4,17 @@ import sys
 import os
 
 def run():
-    # Change to ai-screening-main directory
-    os.chdir('ai-screening-main')
+    # Use current directory (ai-screening)
+    current_dir = os.getcwd()
     
-    # Activate virtual environment
-    venv_python = os.path.join('.venv', 'bin', 'python')
+    # Use current Python environment
+    python_executable = sys.executable
     
-    # Check if venv exists
-    if not os.path.exists(venv_python):
-        print("Virtual environment not found. Creating it...")
-        subprocess.run(['uv', 'venv'], check=True)
-        print("Installing dependencies...")
-        try:
-            subprocess.run(['uv', 'sync'], check=True)
-        except subprocess.CalledProcessError:
-            print("uv sync failed, trying pip install...")
-            subprocess.run([venv_python, '-m', 'pip', 'install', '-e', '.'], check=True)
+    print(f"Starting merged SDN application from {current_dir}")
+    print(f"Using Python: {python_executable}")
     
-    # Run Flask app
-    subprocess.run([venv_python, 'run_api.py'])
+    # Run merged Flask app
+    subprocess.run([python_executable, 'run_merged_app.py'])
 
 if __name__ == "__main__":
     run()

@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Run the merged Flask application with integrated SDN search functionality.
+No separate API server needed.
+"""
 from flask import Flask, render_template, request, jsonify
 import os
 from pathlib import Path
@@ -10,12 +15,12 @@ from sdn_api.utils.logger import setup_logger
 
 load_dotenv()
 
-app = Flask(__name__, template_folder='../templates', static_folder='../static')
+app = Flask(__name__, template_folder='flask_ui/templates', static_folder='flask_ui/static')
 
 logger = setup_logger(__name__)
 
 # Initialize search service directly
-SDN_FILE_PATH = Path(__file__).parent.parent.parent / settings.sdn_file_path
+SDN_FILE_PATH = Path(__file__).parent / settings.sdn_file_path
 try:
     search_service = SDNSearchService(str(SDN_FILE_PATH), use_llm=settings.use_llm)
     logger.info(f"Initialized SDN Search Service with LLM: {settings.use_llm}")
@@ -72,4 +77,6 @@ def stats():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    print("Starting merged SDN Flask application...")
+    print("Available at: http://localhost:5000")
+    app.run(debug=True, host='0.0.0.0', port=5000)
