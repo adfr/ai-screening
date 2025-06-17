@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pathlib import Path
 import traceback
-from functools import wraps
 
 from ..models.sdn import SearchQuery, SearchResponse, MatchResult
 from ..core.search_service import SDNSearchService
@@ -14,17 +13,6 @@ logger = setup_logger(__name__)
 app = Flask(__name__)
 CORS(app)  # Enable CORS
 
-# API Key
-API_KEY = "7d56a165ab7bc4cb4360e2bd8499cd55fbf5666c3c58cb8f258ac70019a6d224.49090a5fa7204c2ab64cf5a4a6801c8a85b0fd3bdb73ae61239b35d4bffd0645"
-
-def require_api_key(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
-        if api_key != API_KEY:
-            return jsonify({"error": "Invalid or missing API key"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 # Initialize search service
 SDN_FILE_PATH = Path(__file__).parent.parent.parent / settings.sdn_file_path
