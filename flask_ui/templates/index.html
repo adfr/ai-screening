@@ -69,6 +69,42 @@
 
 <div id="results-section" class="results-section" style="display: none;">
     <h3 class="results-title">Search Results</h3>
+    
+    <!-- Step Summary Section -->
+    <div id="step-summary" class="step-summary">
+        <h4>Processing Summary</h4>
+        <div class="summary-steps">
+            <div class="summary-step">
+                <span class="summary-icon">🤖</span>
+                <div class="summary-content">
+                    <strong>Step 1: AI Name Generation</strong>
+                    <p id="summary-step1">Generated AI-powered name variations</p>
+                </div>
+            </div>
+            <div class="summary-step">
+                <span class="summary-icon">🔍</span>
+                <div class="summary-content">
+                    <strong>Step 2: Database Filtering</strong>
+                    <p id="summary-step2">Searched through 17,991 SDN entries</p>
+                </div>
+            </div>
+            <div class="summary-step">
+                <span class="summary-icon">⚖️</span>
+                <div class="summary-content">
+                    <strong>Step 3: AI Ranking & Scoring</strong>
+                    <p id="summary-step3">Applied AI-powered confidence scoring</p>
+                </div>
+            </div>
+            <div class="summary-step">
+                <span class="summary-icon">📝</span>
+                <div class="summary-content">
+                    <strong>Step 4: Explanation Generation</strong>
+                    <p id="summary-step4">Generated detailed match explanations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div id="results-container"></div>
 </div>
 
@@ -256,6 +292,28 @@ function completeAllSteps(data) {
     updateStepStatus('step-4', 'completed', '✅');
     const highConfidenceMatches = data.results ? data.results.filter(r => r.confidence === 'HIGH').length : 0;
     document.querySelector('#step-4 .step-text').textContent = `Generated ${highConfidenceMatches} detailed explanations`;
+    
+    // Update summary with actual results
+    updateSummarySteps(data);
+}
+
+function updateSummarySteps(data) {
+    // Step 1 Summary: Name variations generated
+    document.getElementById('summary-step1').textContent = `Generated multiple AI-powered name variations for "${data.query}"`;
+    
+    // Step 2 Summary: Database filtering results
+    const initialMatches = data.total_matches || 0;
+    document.getElementById('summary-step2').textContent = `Found ${initialMatches} potential matches from 17,991 SDN entries after initial filtering`;
+    
+    // Step 3 Summary: AI ranking and confidence analysis
+    const highConf = data.results ? data.results.filter(r => r.confidence === 'HIGH').length : 0;
+    const mediumConf = data.results ? data.results.filter(r => r.confidence === 'MEDIUM').length : 0;
+    const lowConf = data.results ? data.results.filter(r => r.confidence === 'LOW').length : 0;
+    document.getElementById('summary-step3').textContent = `AI analysis completed: ${highConf} high confidence, ${mediumConf} medium confidence, ${lowConf} low confidence matches`;
+    
+    // Step 4 Summary: Explanation generation
+    const withExplanations = data.results ? data.results.filter(r => r.explanation && r.explanation.length > 0).length : 0;
+    document.getElementById('summary-step4').textContent = `Generated detailed explanations for ${withExplanations} matches requiring further review`;
 }
 
 function markStepsAsError() {
