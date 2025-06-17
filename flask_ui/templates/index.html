@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="search-section">
+    <h2 class="section-title">Search SDN Watchlist</h2>
+    <p class="section-description">
+        Enter name, date of birth, nationality, or other identifying information to search the OFAC SDN list.
+    </p>
+    
+    <form id="search-form" class="search-form">
+        <div class="form-group">
+            <label for="query">Search Query</label>
+            <textarea 
+                id="query" 
+                name="query" 
+                class="form-control" 
+                rows="3" 
+                placeholder="Example: John Smith, 01/15/1980, USA"
+                required
+            ></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="max_results">Maximum Results</label>
+            <input 
+                type="number" 
+                id="max_results" 
+                name="max_results" 
+                class="form-control" 
+                value="10" 
+                min="1" 
+                max="50"
+            >
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="search-btn">
+            <span class="btn-text">Search</span>
+            <span class="spinner" style="display: none;"></span>
+        </button>
+    </form>
+</div>
+
+<div id="results-section" class="results-section" style="display: none;">
+    <h3 class="results-title">Search Results</h3>
+    <div id="results-container"></div>
+</div>
+
+<div id="error-section" class="error-section" style="display: none;">
+    <div class="error-message" id="error-message"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('search-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const query = document.getElementById('query').value;
+    const maxResults = document.getElementById('max_results').value;
+    const searchBtn = document.getElementById('search-btn');
+    const resultsSection = document.getElementById('results-section');
+    const errorSection = document.getElementById('error-section');
+    const resultsContainer = document.getElementById('results-container');
+    
+    // Show loading state
+    searchBtn.disabled = true;
+    searchBtn.querySelector('.btn-text').style.display = 'none';
+    searchBtn.querySelector('.spinner').style.display = 'inline-block';
+    resultsSection.style.display = 'none';
+    errorSection.style.display = 'none';
+    
+    try {
+        const response = await fetch('/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                query: query,
+                max_results: parseInt(maxResults)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayResults(data);
+            resultsSection.style.display = 'block';
+        } else {
+            showError(data.error || 'An error occurred');
+        }
+    } catch (error) {
+        showError('Network error: Unable to connect to server');
+    } finally {
+        // Reset button state
+        searchBtn.disabled = false;
+        searchBtn.querySelector('.btn-text').style.display = 'inline';
+        searchBtn.querySelector('.spinner').style.display = 'none';
+    }
+});
+
+function displayResults(data) {
+    const resultsContainer = document.getElementById('results-container');
+    
+    if (!data.results || data.results.length === 0) {
+        resultsContainer.innerHTML = '<p class="no-results">No matches found</p>';
+        return;
+    }
+    
+    const resultsHTML = data.results.map(match => `
+        <div class="result-card ${getConfidenceClass(match.confidence)}">
+            <div class="result-header">
+                <h4 class="result-name">${escapeHtml(match.name)}</h4>
+                <span class="confidence-badge ${getConfidenceClass(match.confidence)}">
+                    ${match.confidence} (${(match.score * 100).toFixed(0)}%)
+                </span>
+            </div>
+            
+            <div class="result-details">
+                <p><strong>Type:</strong> ${match.type}</p>
+                ${match.details.dob ? `<p><strong>Date of Birth:</strong> ${match.details.dob}</p>` : ''}
+                ${match.details.nationality ? `<p><strong>Nationality:</strong> ${match.details.nationality}</p>` : ''}
+                ${match.details.program ? `<p><strong>Programs:</strong> ${match.details.program}</p>` : ''}
+                <p><strong>UID:</strong> ${match.details.id}</p>
+            </div>
+            
+            ${match.explanation ? `
+                <div class="result-explanation">
+                    <h5>Analysis</h5>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: inherit; max-height: 400px; overflow-y: auto;">${escapeHtml(match.explanation)}</pre>
+                </div>
+            ` : ''}
+            
+            <div class="match-details">
+                <h5>Match Details</h5>
+                <ul>
+                    <li><strong>Name Match Score:</strong> ${(match.name_match_score * 100).toFixed(1)}%</li>
+                    <li><strong>Overall Score:</strong> ${(match.score * 100).toFixed(1)}%</li>
+                    ${match.match_reasons ? match.match_reasons.map(reason => 
+                        `<li>${escapeHtml(reason)}</li>`
+                    ).join('') : ''}
+                </ul>
+            </div>
+        </div>
+    `).join('');
+    
+    resultsContainer.innerHTML = resultsHTML;
+}
+
+function getConfidenceClass(confidence) {
+    const level = confidence.toLowerCase().replace('-', '_');
+    return `confidence-${level}`;
+}
+
+function formatKey(key) {
+    return key.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showError(message) {
+    const errorSection = document.getElementById('error-section');
+    const errorMessage = document.getElementById('error-message');
+    errorMessage.textContent = message;
+    errorSection.style.display = 'block';
+}
+</script>
+{% endblock %}
