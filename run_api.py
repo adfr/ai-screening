@@ -2,12 +2,11 @@
 """
 Run the SDN API server
 """
-import uvicorn
+from sdn_api.api.main import app
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "sdn_api.api.main:app",
+    app.run(
         host="0.0.0.0",
         port=8000,
-        reload=True
+        debug=True
     )
