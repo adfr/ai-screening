@@ -333,6 +333,132 @@ textarea.form-control {
     border-radius: 8px;
 }
 
+/* Progress Steps */
+.progress-section {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.progress-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.progress-step.pending {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.progress-step.in-progress {
+    background-color: #dbeafe;
+    border-color: var(--primary-color);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.progress-step.completed {
+    background-color: #d1fae5;
+    border-color: var(--success-color);
+}
+
+.progress-step.error {
+    background-color: #fef2f2;
+    border-color: var(--danger-color);
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.progress-step.pending .step-number {
+    background-color: #e2e8f0;
+    color: var(--text-secondary);
+}
+
+.progress-step.in-progress .step-number {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.progress-step.completed .step-number {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.progress-step.error .step-number {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.step-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+.progress-step.pending .step-text {
+    color: var(--text-secondary);
+}
+
+.progress-step.in-progress .step-text {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.progress-step.completed .step-text {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.progress-step.error .step-text {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.step-status {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
 /* Footer */
 .footer {
     background-color: var(--card-bg);
@@ -364,5 +490,24 @@ textarea.form-control {
     
     .match-details ul {
         grid-template-columns: 1fr;
+    }
+    
+    .progress-steps {
+        gap: 0.75rem;
+    }
+    
+    .progress-step {
+        padding: 0.5rem;
+        gap: 0.75rem;
+    }
+    
+    .step-number {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+    
+    .step-text {
+        font-size: 0.875rem;
     }
 }

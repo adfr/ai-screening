@@ -38,6 +38,33 @@
             <span class="spinner" style="display: none;"></span>
         </button>
     </form>
+    
+    <!-- Progress Status Section -->
+    <div id="progress-section" class="progress-section" style="display: none;">
+        <h3>Search Progress</h3>
+        <div class="progress-steps">
+            <div class="progress-step" id="step-1">
+                <span class="step-number">1</span>
+                <span class="step-text">Generating name variations...</span>
+                <span class="step-status">⏳</span>
+            </div>
+            <div class="progress-step" id="step-2">
+                <span class="step-number">2</span>
+                <span class="step-text">Filtering potential matches...</span>
+                <span class="step-status">⏳</span>
+            </div>
+            <div class="progress-step" id="step-3">
+                <span class="step-number">3</span>
+                <span class="step-text">AI-powered ranking...</span>
+                <span class="step-status">⏳</span>
+            </div>
+            <div class="progress-step" id="step-4">
+                <span class="step-number">4</span>
+                <span class="step-text">Generating explanations...</span>
+                <span class="step-status">⏳</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="results-section" class="results-section" style="display: none;">
@@ -60,14 +87,33 @@ document.getElementById('search-form').addEventListener('submit', async (e) => {
     const searchBtn = document.getElementById('search-btn');
     const resultsSection = document.getElementById('results-section');
     const errorSection = document.getElementById('error-section');
+    const progressSection = document.getElementById('progress-section');
     const resultsContainer = document.getElementById('results-container');
     
-    // Show loading state
+    // Show loading state and progress
     searchBtn.disabled = true;
     searchBtn.querySelector('.btn-text').style.display = 'none';
     searchBtn.querySelector('.spinner').style.display = 'inline-block';
     resultsSection.style.display = 'none';
     errorSection.style.display = 'none';
+    progressSection.style.display = 'block';
+    resetProgressSteps();
+    
+    // Start step indicators
+    const steps = [
+        { id: 'step-1', text: 'Generating AI-powered name variations...', delay: 500 },
+        { id: 'step-2', text: 'Filtering 17,991 SDN entries...', delay: 2000 },
+        { id: 'step-3', text: 'AI ranking and confidence scoring...', delay: 4000 },
+        { id: 'step-4', text: 'Generating detailed explanations...', delay: 6000 }
+    ];
+    
+    // Simulate progress steps
+    steps.forEach((step, index) => {
+        setTimeout(() => {
+            updateStepStatus(step.id, 'in-progress', '🔄');
+            document.querySelector(`#${step.id} .step-text`).textContent = step.text;
+        }, step.delay);
+    });
     
     try {
         const response = await fetch('/search', {
@@ -84,12 +130,19 @@ document.getElementById('search-form').addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (response.ok) {
-            displayResults(data);
-            resultsSection.style.display = 'block';
+            // Mark all steps as complete
+            completeAllSteps(data);
+            setTimeout(() => {
+                displayResults(data);
+                resultsSection.style.display = 'block';
+                progressSection.style.display = 'none';
+            }, 1000);
         } else {
+            markStepsAsError();
             showError(data.error || 'An error occurred');
         }
     } catch (error) {
+        markStepsAsError();
         showError('Network error: Unable to connect to server');
     } finally {
         // Reset button state
@@ -169,6 +222,50 @@ function showError(message) {
     const errorMessage = document.getElementById('error-message');
     errorMessage.textContent = message;
     errorSection.style.display = 'block';
+    document.getElementById('progress-section').style.display = 'none';
+}
+
+function resetProgressSteps() {
+    const steps = ['step-1', 'step-2', 'step-3', 'step-4'];
+    steps.forEach(stepId => {
+        updateStepStatus(stepId, 'pending', '⏳');
+    });
+}
+
+function updateStepStatus(stepId, status, icon) {
+    const step = document.getElementById(stepId);
+    const statusSpan = step.querySelector('.step-status');
+    step.className = `progress-step ${status}`;
+    statusSpan.textContent = icon;
+}
+
+function completeAllSteps(data) {
+    // Step 1: Name variations
+    updateStepStatus('step-1', 'completed', '✅');
+    document.querySelector('#step-1 .step-text').textContent = 'Generated AI name variations';
+    
+    // Step 2: Filtering
+    updateStepStatus('step-2', 'completed', '✅');
+    document.querySelector('#step-2 .step-text').textContent = `Filtered 17,991 entries`;
+    
+    // Step 3: Ranking
+    updateStepStatus('step-3', 'completed', '✅');
+    document.querySelector('#step-3 .step-text').textContent = `AI ranking completed - ${data.total_matches} matches found`;
+    
+    // Step 4: Explanations
+    updateStepStatus('step-4', 'completed', '✅');
+    const highConfidenceMatches = data.results ? data.results.filter(r => r.confidence === 'HIGH').length : 0;
+    document.querySelector('#step-4 .step-text').textContent = `Generated ${highConfidenceMatches} detailed explanations`;
+}
+
+function markStepsAsError() {
+    const steps = ['step-1', 'step-2', 'step-3', 'step-4'];
+    steps.forEach(stepId => {
+        const step = document.getElementById(stepId);
+        if (!step.classList.contains('completed')) {
+            updateStepStatus(stepId, 'error', '❌');
+        }
+    });
 }
 </script>
 {% endblock %}
