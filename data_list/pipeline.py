@@ -164,6 +164,12 @@ class OFACPipeline:
 def main():
     """Main function to run the pipeline"""
     import argparse
+    import sys
+    
+    # Filter out Jupyter/IPython arguments
+    if any('ipykernel' in arg for arg in sys.argv):
+        # Remove Jupyter-specific arguments (-f and the json file)
+        sys.argv = [arg for arg in sys.argv if not arg.startswith('-f') and not arg.endswith('.json')]
     
     parser = argparse.ArgumentParser(description="OFAC Data Pipeline")
     parser.add_argument(
