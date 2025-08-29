@@ -184,7 +184,7 @@ def main():
     )
     parser.add_argument(
         "--data-dir",
-        default="data_list",
+        default="ai-screening/data_list",
         help="Directory for data files (default: data_list)"
     )
     parser.add_argument(
