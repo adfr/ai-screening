@@ -5,8 +5,12 @@ Complete pipeline to download, convert, and import OFAC sanctions data
 
 import logging
 import sys
+import os
 from pathlib import Path
 from datetime import datetime
+
+# Add path for Cloudera environment
+sys.path.append(os.path.join(os.getcwd(), 'ai-screening', 'data_list'))
 
 # Import our modules
 from download_ofac_list import OFACDownloader
