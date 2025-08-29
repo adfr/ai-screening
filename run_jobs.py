@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # This line is not needed here as we'll get project_id in setup_jobs function
-
+FOLDER_NAME = "ai-screening"
 def load_config():
     """
     Load the job configuration from the YAML file
@@ -35,6 +35,9 @@ def load_config():
         os.path.join(script_dir, "config", "jobs_config.yaml"),
         # When the script is in a subdirectory
         os.path.join(os.path.dirname(script_dir), "config", "jobs_config.yaml"),
+        # Try in the ai-screening folder
+        os.path.join(script_dir, FOLDER_NAME, "config", "jobs_config.yaml"),
+        os.path.join(os.path.dirname(script_dir), FOLDER_NAME, "config", "jobs_config.yaml"),
     ]
     
     config_path = None
