@@ -8,6 +8,7 @@ from .ranker import MatchRanker
 from .llm_service import LLMService
 from ..models.sdn import SDNEntry, MatchResult, ConfidenceLevel
 from ..utils.logger import setup_logger
+from ..config import settings
 
 logger = setup_logger(__name__)
 
@@ -19,7 +20,7 @@ class SDNSearchService:
         logger.info(f"Initializing SDNSearchService with LLM: {use_llm}")
         self.loader = SDNDataLoader(sdn_file_path)
         logger.debug("Data loader initialized")
-        self.name_matcher = NameMatcher(use_llm=use_llm)
+        self.name_matcher = NameMatcher(threshold=settings.name_match_threshold, use_llm=use_llm)
         logger.debug("Name matcher initialized")
         self.ranker = MatchRanker(use_llm=use_llm)
         logger.debug("Ranker initialized")
