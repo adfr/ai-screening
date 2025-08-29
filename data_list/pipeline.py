@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class OFACPipeline:
     """Complete pipeline for OFAC data processing"""
     
-    def __init__(self, data_dir: str = "data_list"):
+    def __init__(self, data_dir: str = "ai-screening/data_list"):
         """Initialize pipeline
         
         Args:
