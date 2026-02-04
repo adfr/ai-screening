@@ -1,172 +1,141 @@
 # SDN Watchlist API
 
-A sophisticated two-step matching system for searching the OFAC SDN (Specially Designated Nationals) list. This API helps organizations comply with sanctions screening requirements by providing intelligent name matching and context-based ranking of potential matches.
+A production-ready sanctions screening API for the OFAC SDN (Specially Designated Nationals) list. Built for compliance teams that need intelligent name matching with context-aware ranking.
 
-## Overview
+## Table of Contents
 
-The SDN Watchlist API uses a three-phase approach to identify potential matches:
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [API Reference](#api-reference)
+- [Development](#development)
+- [Architecture](#architecture)
 
-1. **Name Matching Phase**: Employs  multiple strategies including exact matching, fuzzy matching, phonetic matching, and name variation handling to cast a wide net for potential matches
-2. **Context Ranking Phase**: Scores and ranks matches based on additional context like date of birth, nationality, and other identifying information
-3. **Explanation Generation Phase**: For high-confidence matches, it generates detailed explanations using advanced AI models to assess the likelihood of a true match
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/adfr/ai-screening.git
+cd ai-screening
+uv venv && source .venv/bin/activate
+uv pip install -e .
+
+# Download SDN data
+curl -o sdn.csv https://www.treasury.gov/ofac/downloads/sdn.csv
+
+# Configure environment
+echo "OPENAI_API_KEY=your-key" > .env
+
+# Run
+uvicorn sdn_api.api.main:app --reload
+```
+
+API available at `http://localhost:8000` | Docs at `http://localhost:8000/docs`
 
 ## Features
 
-- **Intelligent Name Matching**:
-  - Exact and fuzzy name matching
-  - Phonetic similarity detection
-  - Common name variation handling
-  - Multi-language name support
-  
-- **Context-Aware Ranking**:
-  - Date of birth matching with fuzzy date support
-  - Nationality and citizenship verification 
-  - Address and location matching
-  - Weighted scoring system [tb]
-  
-- **Production-Ready**:
-  - RESTful API with FastAPI, 
-  - Async support for high performance
-  - Comprehensive error handling
-  - Health check endpoints
-  - Modular, maintainable architecture
+| Category | Capabilities |
+|----------|-------------|
+| **Name Matching** | Exact, fuzzy, phonetic matching · Name variation handling · Multi-language support |
+| **Context Ranking** | DOB matching with fuzzy dates · Nationality verification · Address matching · Weighted scoring |
+| **Production Ready** | FastAPI with async support · Health checks · Comprehensive error handling · Modular architecture |
 
-## Requirements
+## How It Works
 
-- Python 3.8+
-- UV package manager
-- Access to OFAC SDN data
+The API uses a three-phase approach:
 
-## Download SDN Data
-
-Before running the API, you need to download the OFAC SDN data file:
-
-```bash
-# Download the SDN CSV file
-curl -o sdn.csv https://www.treasury.gov/ofac/downloads/sdn.csv
-
-# Alternative: using wget
-wget -O sdn.csv https://www.treasury.gov/ofac/downloads/sdn.csv
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Name Matching  │ ──▶ │ Context Ranking │ ──▶ │   Explanation   │
+│                 │     │                 │     │   Generation    │
+│ • Exact match   │     │ • DOB scoring   │     │                 │
+│ • Fuzzy match   │     │ • Nationality   │     │ • AI-powered    │
+│ • Phonetic      │     │ • Location      │     │ • Confidence    │
+│ • Variations    │     │ • Weighted rank │     │ • Verification  │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-The SDN file is updated regularly by OFAC. For production use, consider setting up automated downloads to keep your data current.
+**Example**: Query `"ABBES, Moustaf"`
+
+1. **Phase 1** - Generates variations and finds candidates:
+   - `"ABBES, Moustafa"` (exact: 1.0)
+   - `"MOUSTFA, Djamel"` with alias (0.89)
+
+2. **Phase 2** - Ranks with context:
+   - Scores based on DOB, nationality, location matches
+
+3. **Phase 3** - Generates explanations:
+   - Highlights spelling variations
+   - Recommends verification steps
 
 ## Installation
 
-### 1. Clone the repository
+### Requirements
+
+- Python 3.8+
+- UV package manager (recommended) or pip
+- OpenAI API key
+
+### Setup
 
 ```bash
+# Clone repository
 git clone https://github.com/adfr/ai-screening.git
 cd ai-screening
-```
 
-### 2. Create and activate virtual environment
-
-```bash
-# Using UV (recommended)
+# Create virtual environment
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# Or using standard Python
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-### 3. Install dependencies
-
-```bash
-# Install the package in development mode
+# Install dependencies
 uv pip install -e .
 
-# Or with standard pip
-pip install -e .
+# Download SDN data (updated regularly by OFAC)
+curl -o sdn.csv https://www.treasury.gov/ofac/downloads/sdn.csv
 ```
 
-### 4. Environment Configuration
+## Configuration
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env` file in the project root:
 
 ```bash
-# API Configuration
+# Required
+OPENAI_API_KEY=your-api-key-here
+
+# API Settings (optional)
 API_HOST=0.0.0.0
 API_PORT=8000
 API_RELOAD=true
 
-# OpenAI Configuration (required for context ranking)
-OPENAI_API_KEY=your-api-key-here
-
-# Matching Configuration (optional)
+# Matching Settings (optional)
 FUZZY_THRESHOLD=0.8
 MAX_RESULTS=50
 ENABLE_PHONETIC_MATCHING=true
 
-# Logging
+# Logging (optional)
 LOG_LEVEL=INFO
 ```
 
-**Important**: The `.env` file is required for the API to function properly, especially the `OPENAI_API_KEY` which is used for intelligent context-based ranking.
+## API Reference
 
-## Usage
+### Endpoints
 
-### Start the API server
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/search` | Search the SDN list |
+| `GET` | `/health` | Health check |
 
-```bash
-# Using uvicorn directly
-uvicorn sdn_api.api.main:app --reload
+### Search Request
 
-# Or with custom host/port from .env
-uvicorn sdn_api.api.main:app --host $API_HOST --port $API_PORT --reload
-```
-
-The API will be available at `http://localhost:8000` by default.
-
-### API Documentation
-
-Once the server is running, you can access:
-- Interactive API documentation: `http://localhost:8000/docs`
-- Alternative API documentation: `http://localhost:8000/redoc`
-
-### API Endpoints
-
-#### 1. Search Endpoint
-- **URL**: `POST /search`
-- **Description**: Search for individuals or entities in the SDN list
-- **Request Body**:
-  ```json
-  {
-    "query": "string containing name and optional context",
-    "max_results": 10
-  }
-  ```
-
-#### 2. Health Check
-- **URL**: `GET /health`
-- **Description**: Check API status and connectivity
-- **Response**: `{"status": "healthy"}`
-
-### Example Requests
-
-#### Basic Name Search
 ```bash
 curl -X POST "http://localhost:8000/search" \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "vladimir putin",
-    "max_results": 5
-  }'
+  -d '{"query": "john smith, 1955-06-21, american", "max_results": 10}'
 ```
 
-#### Search with Context
-```bash
-curl -X POST "http://localhost:8000/search" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "john mccain, 21/06/1955, american",
-    "max_results": 10
-  }'
-```
-
-### Example Response
+### Response Format
 
 ```json
 {
@@ -175,110 +144,59 @@ curl -X POST "http://localhost:8000/search" \
       "sdn_entry": {
         "uid": "12345",
         "first_name": "JOHN",
-        "last_name": "MCCAIN",
-        "title": "",
+        "last_name": "SMITH",
         "sdn_type": "Individual",
-        "remarks": "DOB 21 Jun 1955; nationality United States",
-        "program_list": ["UKRAINE-EO13662"]
+        "program_list": ["SDGT"]
       },
       "match_score": 0.95,
-      "match_reasons": [
-        "Exact name match",
-        "Date of birth matches",
-        "Nationality matches"
-      ],
+      "match_reasons": ["Exact name match", "DOB matches", "Nationality matches"],
       "context_score": 0.92,
-      "explanation": "Based on the analysis, this appears to be a high-likelihood match. The name matches exactly, and the date of birth (21 Jun 1955) aligns perfectly with the query. The nationality 'United States' corresponds to the search term 'american'. All key identifying factors are consistent, suggesting this is likely the same individual. No contradicting information was found in the available data."
+      "explanation": "High-likelihood match based on name, DOB, and nationality alignment."
     }
   ],
   "total_matches": 1,
   "search_metadata": {
-    "query": "john mccain, 21/06/1955, american",
+    "query": "john smith, 1955-06-21, american",
     "processing_time": 0.145,
     "strategies_used": ["exact", "fuzzy", "phonetic"]
   }
 }
 ```
 
-### Error Handling
+### Status Codes
 
-The API returns standard HTTP status codes:
-
-- `200 OK`: Successful search
-- `400 Bad Request`: Invalid request format
-- `422 Unprocessable Entity`: Validation error
-- `500 Internal Server Error`: Server error
-
-Error responses include details:
-```json
-{
-  "detail": "Error message describing what went wrong"
-}
-```
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `400` | Invalid request |
+| `422` | Validation error |
+| `500` | Server error |
 
 ## Development
 
-### Running Tests
-
 ```bash
-# Run all tests
+# Run tests
 pytest
-
-# Run with coverage
 pytest --cov=sdn_api
 
-# Run specific test file
-pytest tests/test_api.py
-```
-
-### Code Quality
-
-```bash
-# Format code
+# Code quality
 black sdn_api tests
-
-# Lint code
 flake8 sdn_api tests
-
-# Type checking
 mypy sdn_api
 ```
 
-## How It Works: Example Search Flow
-
-For query: "ABBES, Moustaf"
-
-1. **Step 1 generates variations**:
-   - "ABBES, Moustaf", "Moustaf ABBES", "ABBES Moustaf", etc.
-
-2. **Step 1 finds matches**:
-   - "ABBES, Moustafa" (exact match: 1.0)
-   - "MOUSTFA, Djamel" with alias "MOUSTAFA" (alias match: 0.89)
-
-3. **Step 2 ranks with context**:
-   - ABBES, Moustafa: llm_score: 1.0, confidence: MEDIUM-HIGH
-   - MOUSTFA, Djamel: llm_score: 0.96, confidence: HIGH
-
-4. **Step 3 generates explanations**:
-   - Detailed analysis for each high-confidence match
-   - Highlights the "Moustaf" vs "Moustafa" spelling variation
-   - Notes missing DOB/nationality in query
-   - Recommends additional verification steps
-
 ## Architecture
-
-The project follows a modular architecture:
 
 ```
 sdn_api/
-├── api/          # FastAPI application and routes
-├── core/         # Core business logic
-│   ├── step1/    # Name matching algorithms
-│   └── step2/    # Context ranking system
-├── models/       # Data models and schemas
-└── utils/        # Utility functions
+├── api/          # FastAPI routes
+├── core/         # Business logic
+│   ├── step1/    # Name matching
+│   └── step2/    # Context ranking
+├── models/       # Data schemas
+└── utils/        # Utilities
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see LICENSE file for details.
