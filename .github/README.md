@@ -7,7 +7,7 @@ To enable automated deployment to Cloudera Machine Learning, configure the follo
 ### 1. CML_HOST
 - **Description**: The base URL of your Cloudera Machine Learning workspace
 - **Example**: `https://ml.your-domain.cloudera.com`
-- **How to find**: Copy the URL from your browser when logged into CML (without trailing paths)
+- **How to find**: Copy the URL from your browser when logged into CML (without trailing paths, in secrets)
 
 ### 2. CML_API_KEY
 - **Description**: Your personal CML API key for authentication
